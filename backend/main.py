@@ -12,12 +12,18 @@ from finance.simulate import run_monte_carlo, simulate_portfolio
 
 app = FastAPI(title="Portfolio Simulator", version="1.0.0")
 
+from starlette.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:3000",
+    "https://portfolio-simulator-five.vercel.app",
+    "https://*.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://portfolio-simulator-five.vercel.app",
-    ],
+    allow_origins=origins,
+    allow_origin_regex="https://.*vercel.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
