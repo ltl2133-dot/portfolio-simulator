@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 import random
 from typing import List
 
@@ -125,7 +126,7 @@ def simulate_portfolio(request: PortfolioSimulationRequest) -> PortfolioResponse
         property_results.append(
             PropertyBreakdown(
                 name=prop.name,
-                metrics=metrics,
+                metrics=asdict(metrics),
             )
         )
         total_cashflow += metrics.total_cashflow
