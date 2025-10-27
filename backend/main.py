@@ -1,23 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from schemas import (
-    MonteCarloRequest,
-    MonteCarloResponse,
-    PortfolioResponse,
-    PortfolioSimulationRequest,
-    SamplePortfolioResponse,
-)
-from finance.simulate import run_monte_carlo, simulate_portfolio
-
+# Create the FastAPI app FIRST
 app = FastAPI(title="Portfolio Simulator", version="1.0.0")
 
-from starlette.middleware.cors import CORSMiddleware
-
+# Add CORS middleware before anything else
 origins = [
     "http://localhost:3000",
     "https://portfolio-simulator-five.vercel.app",
-    "https://*.vercel.app",
 ]
 
 app.add_middleware(
@@ -28,6 +18,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Now import the rest of your backend (must use absolute imports for Render)
+from backend.schemas import (
+    MonteCarloRequest,
+    MonteCarloResponse,
+    PortfolioResponse,
+    PortfolioSimulationRequest,
+    SamplePortfolioResponse,
+)
+from backend.finance.simulate import run_monte_carlo, simulate_portfolio
 
 
 @app.get("/health")
