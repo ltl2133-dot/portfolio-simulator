@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .schemas import (
+from schemas import (
     MonteCarloRequest,
     MonteCarloResponse,
     PortfolioResponse,
     PortfolioSimulationRequest,
     SamplePortfolioResponse,
 )
-from .finance.simulate import run_monte_carlo, simulate_portfolio
+from finance.simulate import run_monte_carlo, simulate_portfolio
 
 app = FastAPI(title="Portfolio Simulator", version="1.0.0")
 
