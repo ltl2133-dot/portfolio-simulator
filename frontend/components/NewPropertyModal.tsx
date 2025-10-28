@@ -41,9 +41,9 @@ export default function NewPropertyModal() {
       <motion.button
         type="button"
         onClick={() => setIsOpen(true)}
-        whileHover={{ y: -2, boxShadow: "0 20px 45px -25px rgba(16,185,129,0.9)" }}
+        whileHover={{ y: -2, boxShadow: "0 24px 70px -45px rgba(51,204,255,0.9)" }}
         whileTap={{ scale: 0.96 }}
-        className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-400/20 px-5 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-200 shadow-[0_12px_30px_-18px_rgba(16,185,129,0.9)] backdrop-blur"
+        className="inline-flex items-center gap-2 rounded-full border border-[#33ccff]/60 bg-[#33ccff1a] px-5 py-2 text-sm font-semibold uppercase tracking-[0.16em] text-[#c7f2ff] shadow-[0_18px_60px_-46px_rgba(51,204,255,0.85)] backdrop-blur"
       >
         Add Property
       </motion.button>

@@ -175,18 +175,18 @@ export default function PropertyDetailPage() {
   }, [summary]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.16),_transparent_45%),_radial-gradient(circle_at_bottom,_rgba(16,185,129,0.14),_transparent_45%)]" />
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(51,204,255,0.16),_transparent_45%),_radial-gradient(circle_at_bottom,_rgba(255,102,204,0.14),_transparent_45%)]" />
       <motion.button
         type="button"
         onClick={() => router.push("/portfolio")}
-        whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.12)" }}
+        whileHover={{ scale: 1.05, boxShadow: "0 28px 80px -58px rgba(51,204,255,0.75)" }}
         whileTap={{ scale: 0.95 }}
-        className="fixed left-6 top-6 z-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-200 shadow-lg backdrop-blur"
+        className="fixed left-6 top-6 z-10 inline-flex items-center gap-2 rounded-full border border-[#33ccff]/40 bg-[#33ccff1a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c7f2ff] shadow-[0_18px_60px_-46px_rgba(51,204,255,0.75)] backdrop-blur"
       >
-        ← Back
+        ← Back to Portfolio
       </motion.button>
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center justify-center gap-10 px-6 py-16">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-12 px-6 py-20 text-center">
         {!property && properties.length === 0 && (
           <motion.p
             initial={{ opacity: 0 }}
@@ -213,7 +213,7 @@ export default function PropertyDetailPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="w-full rounded-3xl border border-white/10 bg-white/5 px-10 py-8 text-center shadow-xl backdrop-blur"
+              className="w-full rounded-3xl border border-white/10 bg-white/5 px-10 py-12 shadow-[0_55px_160px_-90px_rgba(51,204,255,0.8)] backdrop-blur-xl"
             >
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
                 Asset Intelligence
@@ -230,19 +230,19 @@ export default function PropertyDetailPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-              className="grid w-full gap-6 md:grid-cols-3"
+              className="grid w-full gap-6 text-center md:grid-cols-3"
             >
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(34,197,94,0.45)] backdrop-blur">
                 <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Net Operating Income</p>
                 <p className="mt-2 text-3xl font-semibold text-emerald-200">{formatCurrency(noi)}</p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(56,189,248,0.45)] backdrop-blur">
                 <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Annual Cashflow</p>
                 <p className="mt-2 text-3xl font-semibold text-cyan-200">
                   {metrics ? formatCurrency(metrics.annual_cashflow) : "—"}
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center backdrop-blur">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(165,180,252,0.45)] backdrop-blur">
                 <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">IRR</p>
                 <p className="mt-2 text-3xl font-semibold text-indigo-200">
                   {metrics ? `${irr.toFixed(1)}%` : "—"}
@@ -254,9 +254,9 @@ export default function PropertyDetailPage() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-              className="grid w-full gap-6 lg:grid-cols-2"
+              className="grid w-full gap-6 text-left lg:grid-cols-2"
             >
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_40px_120px_-60px_rgba(59,130,246,0.4)] backdrop-blur">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_45px_140px_-80px_rgba(34,211,238,0.45)] backdrop-blur-xl">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="tracking-[0.08em]">
                     <p className="text-xs uppercase text-slate-400">Cashflow Rhythm</p>
@@ -288,7 +288,7 @@ export default function PropertyDetailPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_40px_120px_-60px_rgba(16,185,129,0.45)] backdrop-blur">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_45px_140px_-80px_rgba(244,114,182,0.45)] backdrop-blur-xl">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="tracking-[0.08em]">
                     <p className="text-xs uppercase text-slate-400">Probabilistic Envelope</p>

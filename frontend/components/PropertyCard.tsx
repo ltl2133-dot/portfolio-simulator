@@ -9,12 +9,14 @@ interface PropertyCardProps {
   property: Property;
   volatilityFactor?: number;
   volatilityActive?: boolean;
+  highlighted?: boolean;
 }
 
 export default function PropertyCard({
   property,
   volatilityFactor = 1,
   volatilityActive = false,
+  highlighted = false,
 }: PropertyCardProps) {
   const baseCashOnCash = property.downPayment
     ? (property.annualRent - property.annualExpenses) / property.downPayment
@@ -28,10 +30,16 @@ export default function PropertyCard({
     >
       <motion.article
         initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          boxShadow: highlighted
+            ? "0 0 55px rgba(255,102,204,0.45)"
+            : "0 35px 120px -70px rgba(51,204,255,0.85)",
+        }}
         transition={{ duration: 0.45, ease: "easeOut" }}
         whileHover={{ scale: 1.05, y: -6 }}
-        className={`relative overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(51,204,255,0.85)] backdrop-blur-lg transition-all duration-300 group-hover:border-[#33ccff]/60 group-hover:shadow-[0_45px_140px_-60px_rgba(51,204,255,0.95)] ${
+        className={`relative overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-6 backdrop-blur-lg transition-all duration-300 group-hover:border-[#33ccff]/60 group-hover:shadow-[0_45px_140px_-60px_rgba(51,204,255,0.95)] ${
           volatilityActive ? "ring-1 ring-[#ff66cc]/60 bg-[#ff66cc0d]" : ""
         }`}
       >
