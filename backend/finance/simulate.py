@@ -4,8 +4,8 @@ from dataclasses import asdict
 import random
 from typing import List
 
-from ..models import MortgageScheduleEntry, PropertyMetrics
-from ..schemas import (
+from models import MortgageScheduleEntry, PropertyMetrics
+from schemas import (
     MonteCarloRequest,
     MonteCarloResponse,
     MonteCarloRun,
