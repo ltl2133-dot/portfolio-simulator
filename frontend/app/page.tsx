@@ -80,7 +80,7 @@ export default function HomePage() {
             </div>
             <div className="grid gap-4">
               {properties.map((property) => (
-                <PropertyCard key={property.name} property={property} />
+                <PropertyCard key={property.id} property={property} />
               ))}
               {properties.length === 0 && (
                 <motion.p

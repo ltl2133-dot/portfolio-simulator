@@ -9,6 +9,7 @@ import {
 } from "../lib/api";
 
 export interface Property {
+  id: string;
   name: string;
   purchasePrice: number;
   downPayment: number;
@@ -18,28 +19,43 @@ export interface Property {
   annualExpenses: number;
 }
 
+type NewPropertyInput = Omit<Property, "id">;
+
 interface PortfolioState {
   properties: Property[];
   totals: { cashflow: number; equity: number; investment: number };
   monteCarloSummary: Record<string, { min: number; mean: number; max: number }>;
-  addProperty: (property: Property) => void;
+  addProperty: (property: NewPropertyInput) => void;
   clearProperties: () => void;
   fetchSamplePortfolio: () => Promise<void>;
   fetchSimulation: () => Promise<void>;
+  getPropertyById: (id: string) => Property | undefined;
   runMonteCarlo: () => Promise<void>;
 }
 
-const simulationDefaults = {
+export const simulationDefaults = {
   years: 10,
   appreciation_rate: 0.03,
   rent_growth_rate: 0.02,
 };
 
-const monteCarloDefaults = {
+export const monteCarloDefaults = {
   ...simulationDefaults,
   iterations: 200,
   appreciation_volatility: 0.01,
   rent_growth_volatility: 0.01,
+};
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+
+const createId = (name: string, stable = false) => {
+  const base = slugify(name || "property");
+  if (stable && base) return base;
+  return `${base || "property"}-${Math.random().toString(36).slice(2, 7)}`;
 };
 
 export const usePortfolioStore = create<PortfolioState>((set, get) => ({
@@ -48,7 +64,15 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
   monteCarloSummary: {},
 
   addProperty: (property) =>
-    set((state) => ({ properties: [...state.properties, property] })),
+    set((state) => ({
+      properties: [
+        ...state.properties,
+        {
+          ...property,
+          id: createId(property.name || "property"),
+        },
+      ],
+    })),
 
   clearProperties: () =>
     set({
@@ -61,6 +85,7 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     const data = await fetchSamplePortfolioApi();
     set({
       properties: data.properties.map((item: any) => ({
+        id: createId(item.name, true),
         name: item.name,
         purchasePrice: item.purchase_price,
         downPayment: item.down_payment,
@@ -90,6 +115,8 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
     const data = await simulatePortfolioApi(payload);
     set({ totals: data.totals });
   },
+
+  getPropertyById: (id) => get().properties.find((property) => property.id === id),
 
   runMonteCarlo: async () => {
     const { properties } = get();

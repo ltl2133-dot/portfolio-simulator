@@ -26,8 +26,8 @@ export default function PortfolioPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.15),_transparent_45%),_radial-gradient(circle_at_bottom,_rgba(34,197,94,0.1),_transparent_40%)]" />
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-6 pb-24 pt-20">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.12),_transparent_45%),_radial-gradient(circle_at_bottom,_rgba(34,197,94,0.12),_transparent_40%)]" />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-12 px-6 py-16">
         <motion.header
           initial="hidden"
           animate="visible"
@@ -68,9 +68,9 @@ export default function PortfolioPage() {
           transition={{ staggerChildren: 0.08 }}
           className="grid gap-8 lg:grid-cols-[2fr_1fr]"
         >
-          <motion.div variants={fadeIn} className="grid gap-4">
+          <motion.div variants={fadeIn} className="grid gap-5">
             {properties.map((property) => (
-              <PropertyCard key={property.name} property={property} />
+              <PropertyCard key={property.id} property={property} />
             ))}
             {!hasProperties && (
               <motion.p

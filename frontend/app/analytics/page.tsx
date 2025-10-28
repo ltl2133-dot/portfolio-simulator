@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.18),_transparent_45%),_radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.12),_transparent_45%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.16),_transparent_45%),_radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.14),_transparent_45%)]" />
       <motion.button
         type="button"
         onClick={() => router.push("/portfolio")}
@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
       >
         ← Back
       </motion.button>
-      <div className="relative mx-auto flex max-w-4xl flex-col gap-10 px-6 pb-20 pt-24">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center justify-center gap-10 px-6 py-16">
         <motion.header
           initial="hidden"
           animate="visible"

@@ -6,8 +6,11 @@ import type { FormEvent } from "react";
 import { motion } from "framer-motion";
 
 import { usePortfolioStore } from "../store/usePortfolio";
+import type { Property } from "../store/usePortfolio";
 
-const defaultForm = {
+type PropertyDraft = Omit<Property, "id">;
+
+const defaultForm: PropertyDraft = {
   name: "",
   purchasePrice: 250000,
   downPayment: 50000,
@@ -19,7 +22,7 @@ const defaultForm = {
 
 export default function NewPropertyModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<PropertyDraft>(defaultForm);
   const { addProperty } = usePortfolioStore();
 
   const close = () => {
