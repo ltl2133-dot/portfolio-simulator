@@ -23,6 +23,7 @@ interface PortfolioState {
   totals: { cashflow: number; equity: number; investment: number };
   monteCarloSummary: Record<string, { min: number; mean: number; max: number }>;
   addProperty: (property: Property) => void;
+  clearProperties: () => void;
   fetchSamplePortfolio: () => Promise<void>;
   fetchSimulation: () => Promise<void>;
   runMonteCarlo: () => Promise<void>;
@@ -48,6 +49,13 @@ export const usePortfolioStore = create<PortfolioState>((set, get) => ({
 
   addProperty: (property) =>
     set((state) => ({ properties: [...state.properties, property] })),
+
+  clearProperties: () =>
+    set({
+      properties: [],
+      totals: { cashflow: 0, equity: 0, investment: 0 },
+      monteCarloSummary: {},
+    }),
 
   fetchSamplePortfolio: async () => {
     const data = await fetchSamplePortfolioApi();

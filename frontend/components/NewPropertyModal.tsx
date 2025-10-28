@@ -3,6 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import type { FormEvent } from "react";
+import { motion } from "framer-motion";
 
 import { usePortfolioStore } from "../store/usePortfolio";
 
@@ -34,13 +35,15 @@ export default function NewPropertyModal() {
 
   return (
     <>
-      <button
+      <motion.button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white shadow"
+        whileHover={{ y: -2, boxShadow: "0 20px 45px -25px rgba(16,185,129,0.9)" }}
+        whileTap={{ scale: 0.96 }}
+        className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-400/20 px-5 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-emerald-200 shadow-[0_12px_30px_-18px_rgba(16,185,129,0.9)] backdrop-blur"
       >
         Add Property
-      </button>
+      </motion.button>
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={close}>
@@ -53,7 +56,7 @@ export default function NewPropertyModal() {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-slate-950/70" />
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
@@ -67,25 +70,28 @@ export default function NewPropertyModal() {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-lg transform rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title className="text-lg font-medium text-white">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80 p-8 text-left align-middle shadow-[0_40px_120px_-60px_rgba(34,211,238,0.45)] transition-all backdrop-blur-xl">
+                  <Dialog.Title className="text-xl font-semibold tracking-[0.08em] text-white">
                     Add a Property
                   </Dialog.Title>
-                  <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Name</span>
+                  <p className="mt-1 text-sm text-slate-300">
+                    Capture acquisition assumptions to project forward-looking returns.
+                  </p>
+                  <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Name
                         <input
                           required
                           value={form.name}
                           onChange={(event) =>
                             setForm((prev) => ({ ...prev, name: event.target.value }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 shadow-[inset_0_1px_0_rgba(94,234,212,0.15)] focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Purchase Price</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Purchase Price
                         <input
                           type="number"
                           min={0}
@@ -96,11 +102,11 @@ export default function NewPropertyModal() {
                               purchasePrice: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Down Payment</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Down Payment
                         <input
                           type="number"
                           min={0}
@@ -111,11 +117,11 @@ export default function NewPropertyModal() {
                               downPayment: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Mortgage Rate</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Mortgage Rate
                         <input
                           type="number"
                           min={0}
@@ -127,11 +133,11 @@ export default function NewPropertyModal() {
                               mortgageRate: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Mortgage Years</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Mortgage Years
                         <input
                           type="number"
                           min={1}
@@ -142,11 +148,11 @@ export default function NewPropertyModal() {
                               mortgageYears: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Annual Rent</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Annual Rent
                         <input
                           type="number"
                           min={0}
@@ -157,11 +163,11 @@ export default function NewPropertyModal() {
                               annualRent: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
-                      <label className="text-sm">
-                        <span className="text-xs uppercase text-slate-400">Annual Expenses</span>
+                      <label className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                        Annual Expenses
                         <input
                           type="number"
                           min={0}
@@ -172,25 +178,29 @@ export default function NewPropertyModal() {
                               annualExpenses: Number(event.target.value),
                             }))
                           }
-                          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-400 focus:outline-none"
+                          className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         />
                       </label>
                     </div>
 
-                    <div className="flex justify-end gap-3">
-                      <button
+                    <div className="flex flex-wrap justify-end gap-3">
+                      <motion.button
                         type="button"
                         onClick={close}
-                        className="rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-300"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                        className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300"
                       >
                         Cancel
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         type="submit"
-                        className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white shadow"
+                        whileHover={{ y: -2, boxShadow: "0 25px 60px -30px rgba(34,197,94,0.85)" }}
+                        whileTap={{ scale: 0.97 }}
+                        className="rounded-full border border-emerald-400/60 bg-emerald-400/20 px-6 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-200 shadow-[0_18px_40px_-22px_rgba(16,185,129,0.9)]"
                       >
                         Save Property
-                      </button>
+                      </motion.button>
                     </div>
                   </form>
                 </Dialog.Panel>

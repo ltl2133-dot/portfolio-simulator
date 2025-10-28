@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+
 import type { Property } from "../store/usePortfolio";
 
 interface PropertyCardProps {
@@ -12,40 +14,59 @@ export default function PropertyCard({ property }: PropertyCardProps) {
     : 0;
 
   return (
-    <article className="rounded-lg border border-slate-800 bg-slate-900/80 p-5 shadow">
-      <header className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{property.name}</h3>
-        <span className="text-sm text-emerald-300">
-          Cash-on-Cash: {(cashOnCash * 100).toFixed(1)}%
+    <motion.article
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      whileHover={{ y: -4, boxShadow: "0 35px 120px -70px rgba(16,185,129,0.8)" }}
+      className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_25px_80px_-60px_rgba(15,118,110,0.9)] backdrop-blur"
+    >
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-semibold tracking-[0.08em] text-white">
+            {property.name}
+          </h3>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Asset Overview</p>
+        </div>
+        <span className="inline-flex items-center rounded-full border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">
+          Cash-on-Cash {(cashOnCash * 100).toFixed(1)}%
         </span>
       </header>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-300 sm:grid-cols-4">
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-slate-500">
+      <dl className="mt-6 grid grid-cols-2 gap-5 text-sm text-slate-200 sm:grid-cols-4">
+        <div className="space-y-1">
+          <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
             Purchase Price
           </dt>
-          <dd>${property.purchasePrice.toLocaleString()}</dd>
+          <dd className="text-base font-semibold tracking-wide text-slate-100">
+            ${property.purchasePrice.toLocaleString()}
+          </dd>
         </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-slate-500">
+        <div className="space-y-1">
+          <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
             Down Payment
           </dt>
-          <dd>${property.downPayment.toLocaleString()}</dd>
+          <dd className="text-base font-semibold tracking-wide text-slate-100">
+            ${property.downPayment.toLocaleString()}
+          </dd>
         </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-slate-500">
+        <div className="space-y-1">
+          <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
             Annual Rent
           </dt>
-          <dd>${property.annualRent.toLocaleString()}</dd>
+          <dd className="text-base font-semibold tracking-wide text-slate-100">
+            ${property.annualRent.toLocaleString()}
+          </dd>
         </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wide text-slate-500">
+        <div className="space-y-1">
+          <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">
             Expenses
           </dt>
-          <dd>${property.annualExpenses.toLocaleString()}</dd>
+          <dd className="text-base font-semibold tracking-wide text-slate-100">
+            ${property.annualExpenses.toLocaleString()}
+          </dd>
         </div>
       </dl>
-    </article>
+    </motion.article>
   );
 }
