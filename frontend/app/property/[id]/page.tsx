@@ -1,338 +1,219 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { ArrowLeft, BarChart4, Building, Factory, Flame, PlayCircle, Shield } from "lucide-react";
+import { useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import {
-  usePortfolioStore,
-  monteCarloDefaults,
-  simulationDefaults,
-} from "../../../store/usePortfolio";
-import {
-  runMonteCarlo as runMonteCarloApi,
-  simulatePortfolio as simulatePortfolioApi,
-} from "../../../lib/api";
+import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
+import { MonteCarloChart } from "@/components/charts/monte-carlo-chart";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MonteCarloResponse, Property, StressTestResponse } from "@/types/property";
 
-interface PropertyMetricsResponse {
-  value: number;
-  annual_cashflow: number;
-  total_cashflow: number;
-  total_investment: number;
-  equity: number;
-  yearly_cashflows: number[];
+async function fetchProperty(id: string): Promise<Property> {
+  const res = await fetch(`/api/properties/${id}`);
+  if (!res.ok) throw new Error("Failed to load property");
+  return res.json();
 }
 
-interface MonteCarloSummary {
-  [key: string]: { min: number; mean: number; max: number };
+async function runMonteCarlo(id: string) {
+  const res = await fetch("/api/simulate/montecarlo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ property_id: id, iterations: 200 }),
+  });
+  if (!res.ok) throw new Error("Monte Carlo failed");
+  return res.json();
 }
 
-const formatCurrency = (value: number) =>
-  `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-
-const calculateIrr = (cashflows: number[]) => {
-  if (cashflows.length === 0) return 0;
-  let rate = 0.1;
-  for (let iteration = 0; iteration < 100; iteration += 1) {
-    let npv = 0;
-    let derivative = 0;
-    for (let t = 0; t < cashflows.length; t += 1) {
-      const cashflow = cashflows[t];
-      const discount = (1 + rate) ** t;
-      npv += cashflow / discount;
-      if (t > 0) {
-        derivative -= (t * cashflow) / ((1 + rate) ** (t + 1));
-      }
-    }
-    if (Math.abs(derivative) < 1e-8) break;
-    const nextRate = rate - npv / derivative;
-    if (!Number.isFinite(nextRate)) break;
-    if (Math.abs(nextRate - rate) < 1e-6) {
-      rate = nextRate;
-      break;
-    }
-    rate = nextRate;
-  }
-  return Math.max(rate, 0);
-};
+async function applyMarketShock(id: string) {
+  const res = await fetch("/api/simulate/stress", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ property_id: id, vacancy_shock: 0.07, expense_shock: 0.12 }),
+  });
+  if (!res.ok) throw new Error("Stress simulation failed");
+  return res.json();
+}
 
 export default function PropertyDetailPage() {
-  const router = useRouter();
   const params = useParams<{ id: string }>();
-  const propertyId = Array.isArray(params?.id) ? params?.id[0] : params?.id;
+  const router = useRouter();
+  const propertyId = params?.id ?? "";
 
-  const { properties, fetchSamplePortfolio, getPropertyById } = usePortfolioStore();
-  const property = getPropertyById(propertyId ?? "");
+  const propertyQuery = useQuery({
+    queryKey: ["property", propertyId],
+    queryFn: () => fetchProperty(propertyId),
+    enabled: Boolean(propertyId),
+  });
 
-  const [metrics, setMetrics] = useState<PropertyMetricsResponse | null>(null);
-  const [summary, setSummary] = useState<MonteCarloSummary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const monteCarloMutation = useMutation<MonteCarloResponse, Error>({
+    mutationFn: () => runMonteCarlo(propertyId),
+    onSuccess: () => toast.success("Monte Carlo simulation completed"),
+    onError: () => toast.error("Monte Carlo simulation failed"),
+  });
 
-  useEffect(() => {
-    if (!property && properties.length === 0) {
-      fetchSamplePortfolio();
-    }
-  }, [fetchSamplePortfolio, properties.length, property]);
+  const stressMutation = useMutation<StressTestResponse, Error>({
+    mutationFn: () => applyMarketShock(propertyId),
+    onSuccess: (response) =>
+      toast.success("Market shock applied", {
+        description: `Stressed NOI: $${response.stress.avg_stressed_noi.toLocaleString()} | Vacancy ${(response.stress.avg_vacancy * 100).toFixed(2)}%`,
+      }),
+    onError: () => toast.error("Market shock simulation failed"),
+  });
 
-  useEffect(() => {
-    if (!property) return;
-
-    const payloadProperty = {
-      name: property.name,
-      purchase_price: property.purchasePrice,
-      down_payment: property.downPayment,
-      mortgage_rate: property.mortgageRate,
-      mortgage_years: property.mortgageYears,
-      annual_rent: property.annualRent,
-      annual_expenses: property.annualExpenses,
-    };
-
-    const simulationPayload = {
-      ...simulationDefaults,
-      properties: [payloadProperty],
-    };
-
-    const monteCarloPayload = {
-      ...monteCarloDefaults,
-      properties: [payloadProperty],
-    };
-
-    setLoading(true);
-    setError(null);
-
-    Promise.all([
-      simulatePortfolioApi(simulationPayload),
-      runMonteCarloApi(monteCarloPayload),
-    ])
-      .then(([simulationData, monteCarloData]) => {
-        const firstProperty = simulationData.properties?.[0]?.metrics as
-          | PropertyMetricsResponse
-          | undefined;
-        if (firstProperty) {
-          setMetrics(firstProperty);
-        }
-        setSummary(monteCarloData.summary);
-      })
-      .catch(() => {
-        setError("Unable to load property analytics.");
-      })
-      .finally(() => setLoading(false));
-  }, [property]);
-
-  const irr = useMemo(() => {
-    if (!metrics || !property) return 0;
-    const initialInvestment = property.downPayment + property.annualExpenses;
-    const cashflows = [-initialInvestment, ...metrics.yearly_cashflows];
-    return calculateIrr(cashflows) * 100;
-  }, [metrics, property]);
-
-  const noi = useMemo(() => {
-    if (!property) return 0;
-    return property.annualRent - property.annualExpenses;
-  }, [property]);
-
-  const yearlyCashflowData = useMemo(() => {
-    if (!metrics) return [];
-    let cumulative = 0;
-    return metrics.yearly_cashflows.map((cashflow, index) => {
-      cumulative += cashflow;
-      return {
-        year: index + 1,
-        cashflow,
-        cumulative,
-      };
-    });
-  }, [metrics]);
-
-  const monteCarloChartData = useMemo(() => {
-    if (!summary) return [];
-    return [
-      {
-        metric: "Cashflow",
-        min: summary.cashflow?.min ?? 0,
-        mean: summary.cashflow?.mean ?? 0,
-        max: summary.cashflow?.max ?? 0,
-      },
-      {
-        metric: "Equity",
-        min: summary.equity?.min ?? 0,
-        mean: summary.equity?.mean ?? 0,
-        max: summary.equity?.max ?? 0,
-      },
-    ];
-  }, [summary]);
+  const metrics = useMemo(() => propertyQuery.data?.metrics, [propertyQuery.data]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-black text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(51,204,255,0.16),_transparent_45%),_radial-gradient(circle_at_bottom,_rgba(255,102,204,0.14),_transparent_45%)]" />
-      <motion.button
-        type="button"
-        onClick={() => router.push("/portfolio")}
-        whileHover={{ scale: 1.05, boxShadow: "0 28px 80px -58px rgba(51,204,255,0.75)" }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed left-6 top-6 z-10 inline-flex items-center gap-2 rounded-full border border-[#33ccff]/40 bg-[#33ccff1a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#c7f2ff] shadow-[0_18px_60px_-46px_rgba(51,204,255,0.75)] backdrop-blur"
-      >
-        ← Back to Portfolio
-      </motion.button>
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-12 px-6 py-20 text-center">
-        {!property && properties.length === 0 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-3xl border border-white/10 bg-white/5 px-10 py-12 text-center text-sm text-slate-300 backdrop-blur"
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="space-y-8"
+    >
+      {propertyQuery.isError && (
+        <div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+          Unable to load property details. Please return to the portfolio overview.
+        </div>
+      )}
+      <div className="flex flex-col justify-between gap-6 rounded-3xl border border-white/5 bg-gradient-to-br from-slate-900 to-slate-950 p-8 md:flex-row md:items-center">
+        <div className="space-y-3">
+          <Button variant="ghost" className="border border-white/10" onClick={() => router.push("/portfolio")}> 
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Portfolio
+          </Button>
+          {propertyQuery.isLoading ? (
+            <Skeleton className="h-12 w-64 rounded-3xl" />
+          ) : (
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Property Detail</p>
+              <h2 className="text-4xl font-semibold text-white md:text-5xl">{propertyQuery.data?.name}</h2>
+              <p className="text-slate-300">{propertyQuery.data?.location}</p>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button size="lg" variant="accent" onClick={() => router.push(`/property/${propertyId}/edit`)}>
+            <Building className="mr-2 h-4 w-4" /> Edit Property
+          </Button>
+          <Button size="lg" onClick={() => monteCarloMutation.mutate()} disabled={monteCarloMutation.isPending}>
+            <PlayCircle className="mr-2 h-4 w-4" /> Run Monte Carlo Simulation
+          </Button>
+          <Button
+            size="lg"
+            variant="ghost"
+            className="border border-white/10"
+            onClick={() => stressMutation.mutate()}
+            disabled={stressMutation.isPending}
           >
-            Loading property details...
-          </motion.p>
-        )}
-
-        {!property && properties.length > 0 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-3xl border border-white/10 bg-white/5 px-10 py-12 text-center text-sm text-slate-300 backdrop-blur"
-          >
-            We couldn’t find that property. Return to the portfolio to select a live asset.
-          </motion.p>
-        )}
-
-        {property && (
-          <>
-            <motion.header
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="w-full rounded-3xl border border-white/10 bg-white/5 px-10 py-12 shadow-[0_55px_160px_-90px_rgba(51,204,255,0.8)] backdrop-blur-xl"
-            >
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                Asset Intelligence
-              </p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-[0.08em] text-white">
-                {property.name}
-              </h1>
-              <p className="mt-2 text-sm text-slate-300">
-                Deep dive into the cashflow cadence, intrinsic value, and probabilistic outlook for this property.
-              </p>
-            </motion.header>
-
-            <motion.section
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-              className="grid w-full gap-6 text-center md:grid-cols-3"
-            >
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(34,197,94,0.45)] backdrop-blur">
-                <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Net Operating Income</p>
-                <p className="mt-2 text-3xl font-semibold text-emerald-200">{formatCurrency(noi)}</p>
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(56,189,248,0.45)] backdrop-blur">
-                <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Annual Cashflow</p>
-                <p className="mt-2 text-3xl font-semibold text-cyan-200">
-                  {metrics ? formatCurrency(metrics.annual_cashflow) : "—"}
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_35px_120px_-70px_rgba(165,180,252,0.45)] backdrop-blur">
-                <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">IRR</p>
-                <p className="mt-2 text-3xl font-semibold text-indigo-200">
-                  {metrics ? `${irr.toFixed(1)}%` : "—"}
-                </p>
-              </div>
-            </motion.section>
-
-            <motion.section
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-              className="grid w-full gap-6 text-left lg:grid-cols-2"
-            >
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_45px_140px_-80px_rgba(34,211,238,0.45)] backdrop-blur-xl">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="tracking-[0.08em]">
-                    <p className="text-xs uppercase text-slate-400">Cashflow Rhythm</p>
-                    <h2 className="text-2xl font-semibold text-white">Yearly Performance</h2>
-                  </div>
-                  {loading && <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Syncing…</span>}
-                </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={yearlyCashflowData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="year" stroke="#94a3b8" tick={{ fill: "#cbd5f5", fontSize: 12 }} />
-                    <YAxis
-                      stroke="#94a3b8"
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      tick={{ fill: "#cbd5f5", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(15,23,42,0.85)",
-                        border: "1px solid rgba(148,163,184,0.2)",
-                        borderRadius: "18px",
-                        backdropFilter: "blur(12px)",
-                      }}
-                      formatter={(value: number) => `$${value.toLocaleString()}`}
-                    />
-                    <Line type="monotone" dataKey="cashflow" stroke="#22d3ee" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="cumulative" stroke="#a855f7" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_45px_140px_-80px_rgba(244,114,182,0.45)] backdrop-blur-xl">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="tracking-[0.08em]">
-                    <p className="text-xs uppercase text-slate-400">Probabilistic Envelope</p>
-                    <h2 className="text-2xl font-semibold text-white">Monte Carlo Snapshot</h2>
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monteCarloChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="metric" stroke="#94a3b8" tick={{ fill: "#cbd5f5", fontSize: 12 }} />
-                    <YAxis
-                      stroke="#94a3b8"
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                      tick={{ fill: "#cbd5f5", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(15,23,42,0.85)",
-                        border: "1px solid rgba(148,163,184,0.2)",
-                        borderRadius: "18px",
-                        backdropFilter: "blur(12px)",
-                      }}
-                      formatter={(value: number) => `$${value.toLocaleString()}`}
-                    />
-                    <Bar dataKey="min" fill="#f97316" radius={14} />
-                    <Bar dataKey="mean" fill="#22d3ee" radius={14} />
-                    <Bar dataKey="max" fill="#22c55e" radius={14} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.section>
-
-            {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="rounded-3xl border border-rose-400/30 bg-rose-500/10 px-6 py-3 text-center text-sm text-rose-100 backdrop-blur"
-              >
-                {error}
-              </motion.p>
-            )}
-          </>
-        )}
+            <Flame className="mr-2 h-4 w-4" /> Apply Market Shock
+          </Button>
+        </div>
       </div>
-    </main>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Snapshot</CardTitle>
+            <CardDescription>Core return metrics across the hold period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {propertyQuery.isLoading ? (
+              <Skeleton className="h-48 w-full" />
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <p className="text-xs uppercase text-slate-500">Net Operating Income</p>
+                  <p className="text-3xl font-semibold text-emerald-300">
+                    {metrics ? `$${metrics.noi.toLocaleString()}` : "--"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs uppercase text-slate-500">Capitalization Rate</p>
+                  <p className="text-3xl font-semibold text-sky-300">
+                    {metrics ? `${(metrics.cap_rate * 100).toFixed(2)}%` : "--"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs uppercase text-slate-500">Internal Rate of Return</p>
+                  <p className="text-3xl font-semibold text-white">
+                    {metrics ? `${(metrics.irr * 100).toFixed(2)}%` : "--"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs uppercase text-slate-500">Cash-on-Cash Return</p>
+                  <p className="text-3xl font-semibold text-slate-200">
+                    {metrics ? `${(metrics.cash_on_cash_return * 100).toFixed(2)}%` : "--"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Operating Fundamentals</CardTitle>
+            <CardDescription>Income, expenses, and occupancy drivers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {propertyQuery.isLoading ? (
+              <Skeleton className="h-48 w-full" />
+            ) : (
+              <div className="space-y-4 text-sm text-slate-300">
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <span className="flex items-center gap-2">
+                    <Factory className="h-4 w-4" /> Annual Rent (stabilized)
+                  </span>
+                  <span>${propertyQuery.data?.annual_rent.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <span className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" /> Vacancy Rate
+                  </span>
+                  <span>{((propertyQuery.data?.vacancy_rate ?? 0) * 100).toFixed(2)}%</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <span className="flex items-center gap-2">
+                    <BarChart4 className="h-4 w-4" /> Expense Load
+                  </span>
+                  <span>${propertyQuery.data?.annual_expenses.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Income & Expense Projection</CardTitle>
+          <CardDescription>Multi-year cash flow modeling with growth assumptions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {propertyQuery.isLoading ? <Skeleton className="h-80 w-full" /> : <IncomeExpenseChart data={propertyQuery.data?.cashflow_projection ?? []} />}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Monte Carlo Simulation Paths</CardTitle>
+          <CardDescription>Preview value dispersion across stochastic scenarios</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {monteCarloMutation.isPending ? (
+            <Skeleton className="h-80 w-full" />
+          ) : monteCarloMutation.data ? (
+            <MonteCarloChart distribution={monteCarloMutation.data.distribution} />
+          ) : (
+            <div className="flex h-80 items-center justify-center rounded-3xl border border-dashed border-white/10 text-sm text-slate-400">
+              Trigger a Monte Carlo simulation to visualize probabilistic outcomes.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.section>
   );
 }
